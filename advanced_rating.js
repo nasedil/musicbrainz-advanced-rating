@@ -95,6 +95,14 @@
             if (Math.round(ratingPercentage) === i) option.selected = true;
             dropdown.appendChild(option);
         }
+        if (!ratings.includes(Math.round(ratingPercentage))) {
+            const option = createElement('option', {
+                value: ratingPercentage,
+                textContent: ratingPercentage,
+            });
+            option.selected = true;
+            dropdown.appendChild(option);
+        }
 
         // Handle rating submission
         dropdown.addEventListener('change', (event) => {
