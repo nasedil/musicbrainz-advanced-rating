@@ -3,7 +3,7 @@
 // @namespace   Violentmonkey Scripts
 // @match       *://*.musicbrainz.org/*
 // @grant       none
-// @version     0.1
+// @version     0.1.1
 // @author      nasedil_genio (Рябэ Мёщюлюзу)
 // @description 17/11/2024, 23:21:14
 // ==/UserScript==
@@ -83,8 +83,11 @@
             },
         });
 
+        //const ratings = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100];
+        //const ratings = [0, 11, 22, 33, 44, 55, 66, 77, 88, 99]; // tertiary, avoid 20, 40, 60, 80, 100
+        const ratings = [0, 9, 15, 21, 27, 33, 39, 45, 51, 57, 63, 69, 75, 81, 87, 93, 99]; // binary, avoid 20, 40, 60, 80, 100
         // Populate dropdown with rating options
-        for (let i = 0; i <= 100; i+=5) {
+        for (let i of ratings) {
             const option = createElement('option', {
                 value: i,
                 textContent: i,
