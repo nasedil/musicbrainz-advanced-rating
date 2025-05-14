@@ -34,6 +34,7 @@
         }
 
         const entityId = ratingContainer.querySelector('a.set-rating')?.getAttribute('href')?.match(/entity_id=(\d+)/)?.[1];
+        const entityType = ratingContainer.querySelector('a.set-rating')?.getAttribute('href')?.match(/entity_type=([a-z_]+)&/)?.[1];
 
         // Clear existing children of the container
         ratingContainer.innerHTML = '';
@@ -107,7 +108,7 @@
         // Handle rating submission
         dropdown.addEventListener('change', (event) => {
             const selectedRating = event.target.value; // 0-100 scale
-            const submitUrl = `/rating/rate/?entity_type=release_group&entity_id=${entityId}&rating=${selectedRating}&returnto=${encodeURIComponent(location.pathname)}`;
+            const submitUrl = `/rating/rate/?entity_type=${entityType}&entity_id=${entityId}&rating=${selectedRating}&returnto=${encodeURIComponent(location.pathname)}`;
             if (entityId) {
               fetch(submitUrl, {
                   method: 'POST',
