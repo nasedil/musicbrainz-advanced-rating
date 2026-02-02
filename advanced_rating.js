@@ -31,6 +31,7 @@
     const SCRIPT_VERSION = '0.2.0';
     const STORAGE_KEY = 'rating_events';
 
+    // get log of rating events
     function getRatingEvents() {
         try {
             const raw = GM_getValue(STORAGE_KEY, []);
@@ -40,10 +41,63 @@
         }
     }
 
+    // append rating event to the log
     function appendRatingEvent(event) {
         const events = getRatingEvents();
         events.push(event);
         GM_setValue(STORAGE_KEY, events);
+        return events.length - 1; // return index of appended event
+    }
+
+    // update note for an existing event
+    function updateEventNote(index, note) {
+      const events = getRatingEvents();
+      if (!events[index]) return;
+      events[index].note = note;
+      GM_setValue(STORAGE_KEY, events);
+    }
+
+    function showNoteEditorNear(container, eventIndex) {
+        const rect = container.getBoundingClientRect();
+
+        const textarea = document.createElement('textarea');
+        textarea.placeholder = 'Why? (optional)';
+        Object.assign(textarea.style, {
+            position: 'absolute',
+            top: `${rect.bottom + window.scrollY + 5}px`, // 5px below
+            left: `${rect.left + window.scrollX}px`,
+            width: '400px',       // comfortable width
+            height: '120px',      // multiple lines
+            fontSize: '12px',
+            zIndex: 9999,
+            resize: 'both',
+            boxShadow: '0 0 5px rgba(0,0,0,0.3)',
+            background: 'white',
+            padding: '5px',
+            border: '1px solid gray',
+        });
+
+        let saved = false;
+
+        textarea.addEventListener('blur', () => {
+            if (saved) return;
+            saved = true;
+            const note = textarea.value.trim();
+            if (note !== '')
+              updateEventNote(eventIndex, note);
+              console.log("Rating note event:", eventIndex, note);
+            textarea.remove();
+        });
+
+        textarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                saved = true;
+                textarea.remove();
+            }
+        });
+
+        document.body.appendChild(textarea);
+        textarea.focus();
     }
 
     // Utility function to create and style elements
@@ -162,11 +216,13 @@
                             timestamp: new Date().toISOString(),
                             script_version: SCRIPT_VERSION,
                           };
-                          appendRatingEvent(event);
+                          const eventIndex = appendRatingEvent(event);
                           console.log("Rating event logged:", event);
                           // UI update
                           ratingBar.style.backgroundColor = 'lightgray';
                           ratedBar.style.width = `${selectedRating}%`;
+                          // show UI to add text note
+                          showNoteEditorNear(ratingContainer, eventIndex);
                       } else {
                           alert('Failed to submit rating');
                       }
