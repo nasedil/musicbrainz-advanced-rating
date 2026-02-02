@@ -2,14 +2,49 @@
 // @name        MusicBrainz Advanced Rating
 // @namespace   Violentmonkey Scripts
 // @match       *://*.musicbrainz.org/*
-// @grant       none
-// @version     0.1.1
+// @grant       GM_getValue
+// @grant       GM_setValue
+// @version     0.2.0
 // @author      nasedil_genio (Рябэ Мёщюлюзу)
 // @description 17/11/2024, 23:21:14
 // ==/UserScript==
 
+// Version history:
+// 0.1.1: use ratings from 1 to 100 instead of 1 to 5 stars
+// 0.2.0: log rating events to store time and date where an entity was rated
+
+
+// rating event:
+// {
+//   entity_type: string,        // "release_group", "artist", ...
+//   entity_id: string,          // numeric ID as string
+//   rating: number,             // 0–100
+//   previous_rating: number,    // 0-100, 0 means no rating
+//   note: string,               // free text, "" allowed
+//   timestamp: string,          // ISO 8601 UTC
+//   script_version: string
+// }
+
 (function () {
     'use strict';
+
+    const SCRIPT_VERSION = '0.2.0';
+    const STORAGE_KEY = 'rating_events';
+
+    function getRatingEvents() {
+        try {
+            const raw = GM_getValue(STORAGE_KEY, []);
+            return Array.isArray(raw) ? raw : [];
+        } catch {
+            return [];
+        }
+    }
+
+    function appendRatingEvent(event) {
+        const events = getRatingEvents();
+        events.push(event);
+        GM_setValue(STORAGE_KEY, events);
+    }
 
     // Utility function to create and style elements
     function createElement(tag, options = {}) {
@@ -93,7 +128,8 @@
                 value: i,
                 textContent: i,
             });
-            if (Math.round(ratingPercentage) === i) option.selected = true;
+            if (Math.round(ratingPercentage) === i)
+                option.selected = true;
             dropdown.appendChild(option);
         }
         if (!ratings.includes(Math.round(ratingPercentage))) {
@@ -116,6 +152,19 @@
                   .then((response) => {
                       if (response.ok) {
                           console.log(`Rating submitted: ${selectedRating}`);
+                          // log update with timestamp
+                          const event = {
+                            entity_type: entityType,
+                            entity_id: String(entityId),
+                            rating: Number(selectedRating),
+                            previous_rating: Number(ratingPercentage), // 0 means “no rating”
+                            note: "",
+                            timestamp: new Date().toISOString(),
+                            script_version: SCRIPT_VERSION,
+                          };
+                          appendRatingEvent(event);
+                          console.log("Rating event logged:", event);
+                          // UI update
                           ratingBar.style.backgroundColor = 'lightgray';
                           ratedBar.style.width = `${selectedRating}%`;
                       } else {
