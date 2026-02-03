@@ -4,6 +4,7 @@
 // @match       *://*.musicbrainz.org/*
 // @grant       GM_getValue
 // @grant       GM_setValue
+// @grant       unsafeWindow
 // @version     0.2.0
 // @author      nasedil_genio (Рябэ Мёщюлюзу)
 // @description 17/11/2024, 23:21:14
@@ -55,6 +56,11 @@
       if (!events[index]) return;
       events[index].note = note;
       GM_setValue(STORAGE_KEY, events);
+    }
+
+    // delete rating log
+    function clearRatingLog() {
+      GM_setValue(STORAGE_KEY, []);
     }
 
     // export rating events to CSV
@@ -145,8 +151,33 @@
         textarea.focus();
     }
 
-    // add button to export rating event logs
-    function addExportButtons() {
+    // delete rating events log with confirmation
+    function clearRatingLogWithConfirmation() {
+      const count = getRatingEvents().length;
+      if (count === 0) {
+        alert('Rating log is already empty.');
+        return;
+      }
+
+      const first = confirm(`Delete ${count} rating events?\nThis cannot be undone.`);
+      if (!first)
+        return;
+
+      const second = prompt(
+        'Type Delete to confirm log deletion:',
+        ''
+      );
+      if (second !== 'Delete') {
+        alert('Deletion cancelled.');
+        return;
+      }
+
+      clearRatingLog();
+      alert('Rating log deleted.');
+    }
+
+    // add buttons to export and delete rating event logs
+    function addLogButtons() {
       const container = document.querySelector('#header') || document.body;
       const btnJSON = document.createElement('button');
       btnJSON.textContent = 'Export Ratings JSON';
@@ -158,10 +189,27 @@
       Object.assign(btnCSV.style, { margin: '2px' });
       btnCSV.onclick = exportEventsCSV;
 
+      const btnDelete = document.createElement('button');
+      btnDelete.textContent = 'Delete Ratings log';
+      Object.assign(btnDelete.style, { margin: '2px' });
+      btnDelete.onclick = clearRatingLogWithConfirmation;
+
       container.appendChild(btnJSON);
       container.appendChild(btnCSV);
+      container.appendChild(btnDelete);
     }
-    addExportButtons();
+    addLogButtons();
+
+    // expose to console functions to export and clear rating events log
+    unsafeWindow.mbRatingLog = {
+      exportJSON: exportEventsJSON,
+      exportCSV: exportEventsCSV,
+      clearRatingLog: () => {
+        console.warn('About to delete MusicBrainz rating log');
+        clearRatingLog();
+        console.warn('Rating log deleted');
+      }
+    };
 
     // Utility function to create and style elements
     function createElement(tag, options = {}) {
