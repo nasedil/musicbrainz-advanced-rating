@@ -57,6 +57,51 @@
       GM_setValue(STORAGE_KEY, events);
     }
 
+    // export rating events to CSV
+    function exportEventsJSON() {
+      const events = getRatingEvents();
+      const blob = new Blob([JSON.stringify(events, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `musicbrainz_ratings_${new Date().toISOString()}.json`;
+      a.click();
+
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    // export rating events to CSV
+    function exportEventsCSV() {
+      const events = getRatingEvents();
+      if (events.length === 0) return;
+
+      const header = Object.keys(events[0]).join(',');
+      const rows = events.map(ev =>
+          [
+              ev.timestamp,
+              ev.entity_type,
+              ev.entity_id,
+              ev.rating,
+              ev.previous_rating,
+              `"${(ev.note || '').replace(/"/g, '""')}"`, // escape quotes
+              ev.script_version
+          ].join(',')
+      );
+      const csvContent = [header, ...rows].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `musicbrainz_ratings_${new Date().toISOString()}.csv`;
+      a.click();
+
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    // show editor to edit rating notes
     function showNoteEditorNear(container, eventIndex) {
         const rect = container.getBoundingClientRect();
 
@@ -99,6 +144,24 @@
         document.body.appendChild(textarea);
         textarea.focus();
     }
+
+    // add button to export rating event logs
+    function addExportButtons() {
+      const container = document.querySelector('#header') || document.body;
+      const btnJSON = document.createElement('button');
+      btnJSON.textContent = 'Export Ratings JSON';
+      Object.assign(btnJSON.style, { margin: '2px' });
+      btnJSON.onclick = exportEventsJSON;
+
+      const btnCSV = document.createElement('button');
+      btnCSV.textContent = 'Export Ratings CSV';
+      Object.assign(btnCSV.style, { margin: '2px' });
+      btnCSV.onclick = exportEventsCSV;
+
+      container.appendChild(btnJSON);
+      container.appendChild(btnCSV);
+    }
+    addExportButtons();
 
     // Utility function to create and style elements
     function createElement(tag, options = {}) {
