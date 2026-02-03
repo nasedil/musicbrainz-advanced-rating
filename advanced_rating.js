@@ -23,7 +23,11 @@
 //   previous_rating: number,    // 0-100, 0 means no rating
 //   note: string,               // free text, "" allowed
 //   timestamp: string,          // ISO 8601 UTC
-//   script_version: string
+//   timestamp_ms: number,       // numerical timestamp
+//   script_version: string,     // version of this script
+//   client_id: string,          // unique identifier of this browser
+//   event_id: string,           // unique id of the event (to avoid duplicate imports)
+//   rating_source,              // in case we rate in other sources
 // }
 
 (function () {
@@ -31,6 +35,19 @@
 
     const SCRIPT_VERSION = '0.2.0';
     const STORAGE_KEY = 'rating_events';
+    const CLIENT_ID_KEY = 'mb_rating_client_id';
+    const GUI_RATING_SOURCE = 'musicbrainz_gui'
+
+    // get or generate unique id (for current browser,
+    // to distinguish logs from different machines)
+    function getClientId() {
+        let id = GM_getValue(CLIENT_ID_KEY);
+        if (!id) {
+            id = crypto.randomUUID();
+            GM_setValue(CLIENT_ID_KEY, id);
+        }
+        return id;
+    }
 
     // get log of rating events
     function getRatingEvents() {
@@ -84,15 +101,19 @@
 
       const header = Object.keys(events[0]).join(',');
       const rows = events.map(ev =>
-          [
-              ev.timestamp,
-              ev.entity_type,
-              ev.entity_id,
-              ev.rating,
-              ev.previous_rating,
-              `"${(ev.note || '').replace(/"/g, '""')}"`, // escape quotes
-              ev.script_version
-          ].join(',')
+        [
+          ev.entity_type,
+          ev.entity_id,
+          ev.rating,
+          ev.previous_rating,
+          `"${(ev.note || '').replace(/"/g, '""')}"`, // escape quotes
+          ev.timestamp,
+          ev.timestamp_ms,
+          ev.script_version,
+          ev.client_id,
+          ev.event_id,
+          ev.rating_source
+        ].join(',')
       );
       const csvContent = [header, ...rows].join('\n');
 
@@ -325,7 +346,11 @@
                             previous_rating: Number(ratingPercentage), // 0 means “no rating”
                             note: "",
                             timestamp: new Date().toISOString(),
+                            timestamp_ms: Date.now(),
                             script_version: SCRIPT_VERSION,
+                            client_id: getClientId(),
+                            event_id: crypto.randomUUID(),
+                            rating_source: GUI_RATING_SOURCE,
                           };
                           const eventIndex = appendRatingEvent(event);
                           console.log("Rating event logged:", event);
