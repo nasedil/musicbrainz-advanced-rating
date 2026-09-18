@@ -5,14 +5,15 @@
 // @grant       GM_getValue
 // @grant       GM_setValue
 // @grant       unsafeWindow
-// @version     0.2.0
+// @version     0.2.1
 // @author      nasedil_genio (Рябэ Мёщюлюзу)
-// @description 17/11/2024, 23:21:14
+// @description 18/09/2026
 // ==/UserScript==
 
 // Version history:
 // 0.1.1: use ratings from 1 to 100 instead of 1 to 5 stars
 // 0.2.0: log rating events to store time and date where an entity was rated
+// 0.2.1: use 32-grade system instead of 16-grade by default
 
 
 // rating event:
@@ -33,7 +34,7 @@
 (function () {
     'use strict';
 
-    const SCRIPT_VERSION = '0.2.0';
+    const SCRIPT_VERSION = '0.2.1';
     const STORAGE_KEY = 'rating_events';
     const CLIENT_ID_KEY = 'mb_rating_client_id';
     const GUI_RATING_SOURCE = 'musicbrainz_gui'
@@ -307,7 +308,8 @@
 
         //const ratings = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100];
         //const ratings = [0, 11, 22, 33, 44, 55, 66, 77, 88, 99]; // tertiary, avoid 20, 40, 60, 80, 100
-        const ratings = [0, 9, 15, 21, 27, 33, 39, 45, 51, 57, 63, 69, 75, 81, 87, 93, 99]; // binary, avoid 20, 40, 60, 80, 100
+        //const ratings = [0, 9, 15, 21, 27, 33, 39, 45, 51, 57, 63, 69, 75, 81, 87, 93, 99]; // binary 16-grade, avoid 20, 40, 60, 80, 100
+        const ratings = [0, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 48, 51, 54, 57, 60, 63, 66, 69, 72, 75, 78, 81, 84, 87, 90, 93, 96, 99]; // binary 32-grade, avoid 20, 40, 60, 80, 100
         // Populate dropdown with rating options
         for (let i of ratings) {
             const option = createElement('option', {
